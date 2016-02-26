@@ -21,10 +21,10 @@ void shutdown_connection(evutil_socket_t sock) {
     close(sock);
 }
 
-void listener_cb(evconnlistener* listener,
-    evutil_socket_t sock, sockaddr* addr, int len, void* ptr) {
+void listener_cb(evutil_socket_t sock) {
     std::cout << "Accepted" << std::endl;
     char* buf = new char[10000];
+    // TODO(stash): better read
     auto res = read(sock, buf, 10000);
     if (-1 == res) {
         perror("Read failed");
@@ -46,26 +46,38 @@ void listener_cb(evconnlistener* listener,
 }
 
 int main() {
-    auto base = event_base_new();
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == -1) {
+        perror("socket failed");
+        close(sock);
+        return 1;
+    }
+
     sockaddr_in sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons(PORT);
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    auto listener = evconnlistener_new_bind(base,
-        listener_cb /*callback*/,
-        NULL /*arg*/,
-        LEV_OPT_CLOSE_ON_FREE | LEV_OPT_REUSEABLE | LEV_OPT_LEAVE_SOCKETS_BLOCKING, // TODO(stash): Maybe make non-blocking?
-        -1,
-        (sockaddr*)&sa,
-        sizeof(sockaddr_in)
-        );
-
-    if (!listener) {
-        perror("Listener failed");
+    if (-1 == bind(sock,(sockaddr*)&sa, sizeof(sockaddr_in))) {
+        perror("bind() failed");
+        close(sock);
         return 1;
     }
+    
+    if (-1 == listen(sock, -1)) {
+        perror("listen() failed");
+        close(sock);
+        return 1;
+    }
+    
+    while (true) {
+        auto accepted_sock = accept(sock, NULL, NULL);
+        if (-1 == accepted_sock) {
+            perror("accept failed");
+            close(accepted_sock);
+            continue;
+        }
 
-    event_base_dispatch(base);
-    event_base_free(base);
+        listener_cb(accepted_sock);        
+    }
 }
