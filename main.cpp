@@ -1,3 +1,6 @@
+#include "queue.h"
+
+// TODO(stash): cleanup includes
 #include <event2/listener.h>
 #include <event2/event.h>
 #include <arpa/inet.h>
@@ -46,6 +49,9 @@ void listener_cb(evutil_socket_t sock) {
 }
 
 int main() {
+    ThreadQueue<int> t_q;
+    t_q.Push(0);
+    std::cout << t_q.Pop() << std::endl;
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
         perror("socket failed");

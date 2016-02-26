@@ -1,4 +1,10 @@
 all: main
 
-main: main.cpp
-	g++ --std=c++11 -o main -levent main.cpp
+main: main.o queue.o
+	g++ -o main -levent main.o queue.o
+
+main.o: main.cpp queue.h
+	g++ --std=c++11 -c main.cpp
+
+queue.o: queue.cpp queue.h
+	g++ --std=c++11 -c queue.cpp
