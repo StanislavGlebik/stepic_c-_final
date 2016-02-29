@@ -14,12 +14,14 @@
 #define PORT 1234
 #define POOL_SIZE 1
 
+const std::string GET_REQUEST = "GET";
+
 void shutdown_connection(int sock) {
     shutdown(sock, SHUT_RDWR);
     close(sock);
 }
 
-void listener_cb(int sock) {
+void listener_cb(int sock, const std::string& dir) {
     std::cout << "Accepted" << std::endl;
     char* buf = new char[10000];
     // TODO(stash): better read
@@ -31,6 +33,18 @@ void listener_cb(int sock) {
     } else {
         std::cout << std::string(buf, res) << std::endl;
     }
+    
+    std::string request(buf, res);
+
+    if (request.substr(0, GET_REQUEST.size()) != GET_REQUEST) {
+        return;
+    }
+    
+    auto offset = GET_REQUEST.size() + 1; 
+    auto spacePos = request.find(' ', offset);
+    auto path = request.substr(offset, spacePos - offset);
+    
+    auto fullPath = dir + "/" + path;
 
     char outbuf[] =
         "HTTP/1.1 200 OK\r\n"
@@ -73,11 +87,12 @@ int main(int argc, char** argv) {
 
     ThreadQueue<int> t_q;
     // TODO(stash): why cannot pass WorkerThread here (copy constructor error)?
-    std::thread worker([&t_q] ()
+    std::string dir = params.dir;
+    std::thread worker([&t_q, dir] ()
         {
             while (true) {
                 auto x = t_q.Pop();
-                listener_cb(x);
+                listener_cb(x, dir);
             }
         }
     );
@@ -86,6 +101,12 @@ int main(int argc, char** argv) {
     if (sock == -1) {
         perror("socket failed");
         close(sock);
+        exit(EXIT_FAILURE);
+    }
+    
+    int enable = 1;    
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
         exit(EXIT_FAILURE);
     }
 
