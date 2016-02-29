@@ -1,4 +1,5 @@
 #include "queue.h"
+#include "util.h"
 
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -63,35 +64,7 @@ private:
 };
 
 int main() {
-    std::cout << "Main thread: " << std::this_thread::get_id() << std::endl;
-    pid_t pid = fork();
-    if (pid < 0) {
-        std::cout << "Cannot create another process" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    if (pid > 0) {
-        exit(EXIT_SUCCESS);
-    }
-
-    umask(0);
-    if (!freopen("./webserver.log", "w", stdout)) {
-        perror("Failed");
-        exit(EXIT_FAILURE);
-    }
-
-    pid_t sid = setsid();
-    if (sid < 0) {
-        perror("Failed to initialize sid");
-        exit(EXIT_FAILURE);
-    }
-    
-    if (chdir("/") < 0) {
-        perror("Failed chdir");
-        exit(EXIT_FAILURE);
-    }
-    close(STDIN_FILENO);
-    close(STDERR_FILENO);
+    Daemonize();
 
     ThreadQueue<int> t_q;
     // TODO(stash): why cannot pass WorkerThread here (copy constructor error)?
