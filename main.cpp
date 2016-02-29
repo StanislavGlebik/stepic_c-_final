@@ -1,35 +1,24 @@
 #include "queue.h"
 
-// TODO(stash): cleanup includes
-#include <event2/listener.h>
-#include <event2/event.h>
 #include <arpa/inet.h>
-
-#include <iostream>
-#include <stdio.h>
-#include <errno.h>
-#include <stdio.h>
-#include <errno.h>
-#include <stdio.h>
-#include <errno.h>
-
 #include <unistd.h>
-
-#include <string>
-#include <thread>
-
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <iostream>
+#include <errno.h>
+#include <string>
+#include <thread>
 
 #define PORT 1234
 #define POOL_SIZE 1
 
-void shutdown_connection(evutil_socket_t sock) {
+void shutdown_connection(int sock) {
     shutdown(sock, SHUT_RDWR);
     close(sock);
 }
 
-void listener_cb(evutil_socket_t sock) {
+void listener_cb(int sock) {
     std::cout << "Accepted" << std::endl;
     char* buf = new char[10000];
     // TODO(stash): better read
@@ -78,31 +67,28 @@ int main() {
     pid_t pid = fork();
     if (pid < 0) {
         std::cout << "Cannot create another process" << std::endl;
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     if (pid > 0) {
-        return 0;
+        exit(EXIT_SUCCESS);
     }
-     
-    
+
     umask(0);
     if (!freopen("./webserver.log", "w", stdout)) {
         perror("Failed");
-        return 1;
+        exit(EXIT_FAILURE);
     }
-
-    std::cout << "PID: " << getpid() << std::endl;
 
     pid_t sid = setsid();
     if (sid < 0) {
         perror("Failed to initialize sid");
-        return 1;
+        exit(EXIT_FAILURE);
     }
     
     if (chdir("/") < 0) {
         perror("Failed chdir");
-        return 1;
+        exit(EXIT_FAILURE);
     }
     close(STDIN_FILENO);
     close(STDERR_FILENO);
@@ -122,7 +108,7 @@ int main() {
     if (sock == -1) {
         perror("socket failed");
         close(sock);
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     sockaddr_in sa;
@@ -133,13 +119,13 @@ int main() {
     if (-1 == bind(sock,(sockaddr*)&sa, sizeof(sockaddr_in))) {
         perror("bind() failed");
         close(sock);
-        return 1;
+        exit(EXIT_FAILURE);
     }
-    
+
     if (-1 == listen(sock, -1)) {
         perror("listen() failed");
         close(sock);
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     while (true) {
