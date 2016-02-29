@@ -38,3 +38,33 @@ void Daemonize() {
     close(STDIN_FILENO);
     close(STDERR_FILENO);
 }
+
+Params ParseParams(int argc, char** argv) {
+    int c;
+    Params params;
+    while ((c = getopt(argc, argv, "h:p:d:")) != -1) {
+        switch (c) {
+            case 'h':
+            params.host = std::string(optarg);
+            break;
+
+            case 'p':
+            params.port = atoi(optarg);
+            break;
+
+            case 'd':
+            params.dir = std::string(optarg);
+            break;
+
+            default:
+            std::cout << "Unknown cmd parameters " << c << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if ((params.host == "") || (params.dir == "") || (params.port == 0)) {
+        std::cout << "Not all parameters set!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    return params;
+}

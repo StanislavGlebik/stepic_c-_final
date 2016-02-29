@@ -63,7 +63,12 @@ private:
     ThreadQueue<int>& q_;
 };
 
-int main() {
+int main(int argc, char** argv) {
+    Params params = ParseParams(argc, argv);
+    std::cout << "Host: " << params.host << std::endl;
+    std::cout << "Port: " << params.port << std::endl;
+    std::cout << "Dir: " << params.dir << std::endl;
+
     Daemonize();
 
     ThreadQueue<int> t_q;
