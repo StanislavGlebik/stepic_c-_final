@@ -1,5 +1,6 @@
 #include "queue.h"
 #include "util.h"
+#include "http.h"
 
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -13,50 +14,6 @@
 
 #define PORT 1234
 #define POOL_SIZE 1
-
-const std::string GET_REQUEST = "GET";
-
-void shutdown_connection(int sock) {
-    shutdown(sock, SHUT_RDWR);
-    close(sock);
-}
-
-void listener_cb(int sock, const std::string& dir) {
-    std::cout << "Accepted" << std::endl;
-    char* buf = new char[10000];
-    // TODO(stash): better read
-    auto res = read(sock, buf, 10000);
-    if (-1 == res) {
-        perror("Read failed");
-        shutdown_connection(sock);
-        return;
-    } else {
-        std::cout << std::string(buf, res) << std::endl;
-    }
-    
-    std::string request(buf, res);
-
-    if (request.substr(0, GET_REQUEST.size()) != GET_REQUEST) {
-        return;
-    }
-    
-    auto offset = GET_REQUEST.size() + 1; 
-    auto spacePos = request.find(' ', offset);
-    auto path = request.substr(offset, spacePos - offset);
-    
-    auto fullPath = dir + "/" + path;
-
-    char outbuf[] =
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/html; charset=UTF-8\r\n"
-        "Content-Length: 4\r\n"
-        "Connection: close\r\n"
-        "\r\n"
-        "aaaa";
-    write(sock, outbuf, sizeof(outbuf));
-    shutdown_connection(sock);
-    std::cout << "Handled by: " << std::this_thread::get_id() << std::endl;
-}
 
 class WorkerThread {
 public:
@@ -87,12 +44,12 @@ int main(int argc, char** argv) {
 
     ThreadQueue<int> t_q;
     // TODO(stash): why cannot pass WorkerThread here (copy constructor error)?
-    std::string dir = params.dir;
+    const std::string& dir = params.dir;
     std::thread worker([&t_q, dir] ()
         {
             while (true) {
                 auto x = t_q.Pop();
-                listener_cb(x, dir);
+                RequestHandler(x, dir);
             }
         }
     );
