@@ -71,10 +71,10 @@ int main(int argc, char** argv) {
     sockaddr_in sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons(params.port);
-    sa.sin_addr.s_addr = htonl(INADDR_ANY);
+    sa.sin_addr.s_addr = inet_addr(params.host.c_str());
 
     if (-1 == bind(sock,(sockaddr*)&sa, sizeof(sockaddr_in))) {
-        perror("bind() failed");
+        std::cout << "bind() failed " << errno << std::endl;
         close(sock);
         exit(EXIT_FAILURE);
     }
