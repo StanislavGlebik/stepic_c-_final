@@ -18,6 +18,9 @@
 #include <string>
 #include <thread>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #define PORT 1234
 #define POOL_SIZE 1
 
@@ -72,6 +75,38 @@ private:
 
 int main() {
     std::cout << "Main thread: " << std::this_thread::get_id() << std::endl;
+    pid_t pid = fork();
+    if (pid < 0) {
+        std::cout << "Cannot create another process" << std::endl;
+        return 1;
+    }
+
+    if (pid > 0) {
+        return 0;
+    }
+     
+    
+    umask(0);
+    if (!freopen("./webserver.log", "w", stdout)) {
+        perror("Failed");
+        return 1;
+    }
+
+    std::cout << "PID: " << getpid() << std::endl;
+
+    pid_t sid = setsid();
+    if (sid < 0) {
+        perror("Failed to initialize sid");
+        return 1;
+    }
+    
+    if (chdir("/") < 0) {
+        perror("Failed chdir");
+        return 1;
+    }
+    close(STDIN_FILENO);
+    close(STDERR_FILENO);
+
     ThreadQueue<int> t_q;
     // TODO(stash): why cannot pass WorkerThread here (copy constructor error)?
     std::thread worker([&t_q] ()
@@ -106,7 +141,7 @@ int main() {
         close(sock);
         return 1;
     }
-    
+
     while (true) {
         std::cout << "Before accept" << std::endl;
         auto accepted_sock = accept(sock, NULL, NULL);
