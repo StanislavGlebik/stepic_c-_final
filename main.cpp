@@ -13,8 +13,7 @@
 #include <string>
 #include <thread>
 
-#define PORT 1234
-#define POOL_SIZE 1
+#define POOL_SIZE 10
 
 class WorkerThread {
 public:
@@ -71,7 +70,7 @@ int main(int argc, char** argv) {
 
     sockaddr_in sa;
     sa.sin_family = AF_INET;
-    sa.sin_port = htons(PORT);
+    sa.sin_port = htons(params.port);
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (-1 == bind(sock,(sockaddr*)&sa, sizeof(sockaddr_in))) {
