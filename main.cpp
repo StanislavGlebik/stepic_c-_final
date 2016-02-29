@@ -57,14 +57,14 @@ int main(int argc, char** argv) {
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1) {
-        perror("socket failed");
+        std::cout << "socket failed " << errno << std::endl;
         close(sock);
         exit(EXIT_FAILURE);
     }
     
     int enable = 1;    
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
-        perror("setsockopt(SO_REUSEADDR) failed");
+        std::cout << "setsockopt failed " << errno << std::endl;
         exit(EXIT_FAILURE);
     }
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     }
 
     if (-1 == listen(sock, -1)) {
-        perror("listen() failed");
+        std::cout << "listen() failed " << errno << std::endl;
         close(sock);
         exit(EXIT_FAILURE);
     }
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
         std::cout << "Before accept" << std::endl;
         auto accepted_sock = accept(sock, NULL, NULL);
         if (-1 == accepted_sock) {
-            perror("accept failed");
+            std::cout << "accept failed: " << errno << std::endl;
             close(accepted_sock);
             continue;
         }
