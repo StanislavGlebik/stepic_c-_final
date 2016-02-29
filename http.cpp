@@ -9,6 +9,8 @@
 #include <iostream>
 #include <thread>
 #include <fstream>
+#include <streambuf>
+#include <sstream>
 
 namespace {
 
@@ -27,6 +29,12 @@ bool FileExists(const std::string& filename) {
     return res;
 }
 
+std::string ReadFile(const std::string& filename) {
+    std::ifstream ifs(filename);
+    return std::string(std::istreambuf_iterator<char>(ifs),
+        std::istreambuf_iterator<char>());
+}
+
 std::string Generate404() {
     char outbuf[] =
         "HTTP/1.0 404 Not Found\r\n"
@@ -39,16 +47,17 @@ std::string Generate404() {
     return std::string(outbuf);
 }
 
-std::string Generate200() {
-    char outbuf[] =
+std::string Generate200(const std::string& filename) {
+    const std::string content = ReadFile(filename);
+    std::ostringstream oss;
+    oss << 
         "HTTP/1.0 200 OK\r\n"
         "Content-Type: text/html; charset=UTF-8\r\n"
-        "Content-Length: 4\r\n"
+        "Content-Length: " << content.size() << "\r\n"
         "Connection: close\r\n"
-        "\r\n"
-        "aaaa";
+        "\r\n" << content;
 
-    return std::string(outbuf);
+    return oss.str();
 }
 
 }
@@ -81,7 +90,7 @@ void RequestHandler(int sock, const std::string& dir) {
     std::string result; 
     if (FileExists(fullPath)) {
         std::cout << "Exists!" << std::endl;
-        result = Generate200();
+        result = Generate200(fullPath);
     } else {
         std::cout << "Not found!" << std::endl;
         result = Generate404();

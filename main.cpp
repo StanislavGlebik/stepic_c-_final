@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 #include <iostream>
 #include <errno.h>
@@ -35,6 +36,7 @@ private:
 };
 
 int main(int argc, char** argv) {
+    sigignore(SIGHUP);
     Params params = ParseParams(argc, argv);
     std::cout << "Host: " << params.host << std::endl;
     std::cout << "Port: " << params.port << std::endl;
