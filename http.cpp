@@ -83,7 +83,11 @@ void RequestHandler(int sock, const std::string& dir) {
     auto offset = GET_REQUEST.size() + 1; 
     auto spacePos = request.find(' ', offset);
     auto path = request.substr(offset, spacePos - offset);
-   
+    
+    auto cgipos = path.find('?');
+    if (cgipos != std::string::npos) {
+        path = path.substr(0, cgipos);
+    }
     // TODO(stash): security hole! 
     auto fullPath = dir + "/" + path;
    
