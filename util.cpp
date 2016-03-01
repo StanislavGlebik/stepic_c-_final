@@ -8,6 +8,7 @@
 
 #include <iostream>
 
+#define LOG_FILE "/var/log/webserver.log"
 void Daemonize() {
     pid_t pid = fork();
     if (pid < 0) {
@@ -20,7 +21,7 @@ void Daemonize() {
     }
 
     umask(0);
-    if (!freopen("./webserver.log", "w", stdout)) {
+    if (!freopen(LOG_FILE, "w", stdout)) {
         perror("Failed");
         exit(EXIT_FAILURE);
     }
