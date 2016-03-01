@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 
-#define POOL_SIZE 10
+#define POOL_SIZE 128
 
 class WorkerThread {
 public:
